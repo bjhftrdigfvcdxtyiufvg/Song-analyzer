@@ -1,0 +1,136 @@
+import lyricsgenius as lg
+genius=lg.Genius("your api key")
+from cleantext import clean 
+import re
+import json
+
+import google.generativeai as gemini
+gemini.configure(api_key="your api key")
+ai_model = gemini.GenerativeModel('gemini-2.5-flash')
+
+songn=""
+full_lyrics=""
+artist1=""
+
+
+genius.timeout = 15
+genius.retries = 3
+def getlyr():
+    global songn,artist1
+    print("enter the song name")
+    songn=input()
+    print("enter the artist name ")
+    artist1=input()
+    lyr=genius.search_song(songn,artist=artist1)
+    with open ("lyrics.txt","w",encoding="utf-8") as f:
+        f.write(lyr.lyrics)
+
+def cleaner():
+    with open('lyrics.txt',"r",encoding="utf-8") as f:
+        lyricss=f.read()
+        lyrc=clean(
+              
+            lyricss,
+            fix_unicode=True,       
+            to_ascii=True,          
+            lower=False,             
+            no_line_breaks=False, 
+            no_urls=True,         
+            no_emails=True,       
+            no_phone_numbers=True,
+            no_numbers=False,     
+            no_digits=False,      
+            no_currency_symbols=True,
+            no_punct=False     
+              )
+        
+        with open ("lyricscleaned.text","w",encoding="utf-8")as file:
+            file.write(lyrc)
+getlyr()
+cleaner()
+def analyzefullsong():
+    global full_lyrics
+   
+    with open("lyricscleaned.text", "r", encoding="utf-8") as file:
+        full_lyrics=file.read()
+        
+    print("Analyzing the song's meaning...\n")
+    prompt = f"""
+    Read the following song lyrics and provide a comprehensive explanation of the song's overall meaning, core themes, and notable metaphors. Keep the explanation to 3-4 paragraphs,use the best examples and analyze,an.
+    
+    Lyrics:
+    {full_lyrics}
+    """
+    response = ai_model.generate_content(prompt)
+    
+    print("FULL SONG ANALYSIS")
+    print(response.text)
+def themedeep():
+    print("Looking for metaphors and use of figures of speech...\n")
+    prompt=f"""
+    analyze the use of different figures of speech,metaphors and poetic devices in the given song lyrics and the song title and print your analysis with examples not more than 3 to 5 paragraphs.
+    Lyrics:
+    {full_lyrics}
+    Title:
+    {songn}
+    """
+    response=ai_model.generate_content(prompt)
+    print("metaphors and poetic devices")
+    print(response.text)
+def artistimpact():
+    print("Analyzing the impact of this song on the artists carreer")
+    prompt=f"""
+    analyze the song lyrics and explain how the lyrics define the artists style and what impact did the song have in the artist carreer and dontmake it bigger than 2 paragraphs.
+    Lyrics:
+    {full_lyrics}
+    Title:
+    {songn}
+    Artist:
+    {artist1}
+
+    """
+    response=ai_model.generate_content(prompt)
+    print("Impact of the song")
+    print(response.text)
+def rhymeschemes():
+    print("Analyzing the rhymeschemes")
+    prompt=f"""
+    analyze the song lyrics and print the rhyme schemes and the genius method used in lyrics like how 1 word gives 2 different meanings .
+    Lyrics:
+    {full_lyrics}
+    Title:
+    {songn}
+    Artist:
+    {artist1}
+
+    """
+    response=ai_model.generate_content(prompt)
+    print("Rhyme scheme and genius of the lyrics")
+    print(response.text)
+print("what you want to do \n" 
+"Enter 1 for song analysis\n" \
+"Enter 2 for analyzing the theme\n" \
+"enter 3 for analyzing the impact of the song on the artists carreer\n" \
+"enter 4 for analyzing rhymeschemes\n" \
+"enter 5 for analyzing all")
+test=int(input())
+if test==1:
+    analyzefullsong()
+elif test==2:
+    themedeep()
+elif test==3:
+    artistimpact()
+elif test==4:
+    rhymeschemes()
+elif test==5:
+    analyzefullsong()
+    themedeep()
+    artistimpact()
+    rhymeschemes()
+    
+    
+
+
+
+
+    
